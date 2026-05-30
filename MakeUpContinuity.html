@@ -109,6 +109,9 @@ textarea{resize:vertical;min-height:80px;font-family:inherit}
     <select class="proj-sel" id="proj-sel" onchange="switchProject(this.value)"></select>
     <div class="icon-btn" onclick="openSheet('sheetNewProj')" title="Nouveau projet">＋</div>
     <div class="icon-btn" onclick="openRename()" title="Renommer">✎</div>
+    <div class="icon-btn" onclick="exportData()" title="Exporter">⬇</div>
+    <div class="icon-btn" onclick="document.getElementById('import-input').click()" title="Importer">⬆</div>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
     <div class="icon-btn danger" onclick="deleteProject()" title="Supprimer">✕</div>
   </div>
 
@@ -576,6 +579,36 @@ function renderDivers(){
 }
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function exportData(){
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download='MUContinuity_backup_'+date+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const imported=JSON.parse(ev.target.result);
+      if(!imported.projects)throw new Error();
+      if(!confirm('Importer ces données ? Vos données actuelles seront remplacées.'))return;
+      data=imported;
+      if(!data.currentId||!data.projects[data.currentId])data.currentId=Object.keys(data.projects)[0];
+      save();renderProjSel();loadProject();
+      alert('✓ Données importées avec succès !');
+    }catch(err){alert('Fichier invalide. Utilise un fichier exporté depuis cette app.');}
+  };
+  r.readAsText(file);
+  e.target.value='';
+}
 
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 
