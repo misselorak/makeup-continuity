@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MU Continuity">
+<title>Make Up Continuity</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;
+  --text:#1a1a1a;--text2:#666666;--text3:#999999;
+  --border:#e0e0e0;--border2:#cccccc;
+  --pink:#D4537E;--pink-dark:#993556;--pink-light:#FBEAF0;--pink-text:#72243E;
+  --teal-light:#E1F5EE;--teal-text:#0F6E56;
+  --amber-light:#FAEEDA;--amber-text:#854F0B;
+  --blue-light:#E6F1FB;--blue-text:#185FA5;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:#3a3a3c;--border2:#48484a;
+    --pink-light:#3d1a28;--pink-text:#f4a7c3;
+    --teal-light:#0a2e22;--teal-text:#5dcaa5;
+    --amber-light:#2e1f00;--amber-text:#efb84a;
+    --blue-light:#0a1e35;--blue-text:#85b7eb;
+  }
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);font-size:16px}
+#app{display:flex;flex-direction:column;height:100%;height:-webkit-fill-available}
+.topbar{display:flex;align-items:center;gap:8px;padding:12px 16px 8px;border-bottom:0.5px solid var(--border);flex-shrink:0;background:var(--bg)}
+.topbar-title{font-size:17px;font-weight:600;flex:1}
+.proj-sel{font-size:15px;font-weight:500;padding:5px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text);max-width:160px;-webkit-appearance:none;appearance:none;cursor:pointer}
+.icon-btn{width:36px;height:36px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0}
+.icon-btn.danger{color:#e24b4a;border-color:#f09595}
+.tabs{display:flex;padding:8px 16px 0;gap:4px;border-bottom:0.5px solid var(--border);flex-shrink:0;background:var(--bg);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 14px;border-radius:8px 8px 0 0;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border:0.5px solid transparent;border-bottom:none;white-space:nowrap;background:transparent;display:flex;align-items:center;gap:5px}
+.tab.active{color:var(--pink);border-color:var(--border);background:var(--bg);border-bottom:1px solid var(--bg)}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}
+.section{display:none;padding:16px}
+.section.active{display:block}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=search],select,textarea{font-size:15px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none;appearance:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--pink)}
+textarea{resize:vertical;min-height:80px;font-family:inherit}
+.flex-input{flex:1;min-width:120px}
+.btn{padding:9px 14px;border:1px solid var(--border2);border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--text);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.primary{background:var(--pink);color:#fff;border-color:var(--pink)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.danger{color:#e24b4a;border-color:#f09595;background:transparent}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-actions{display:flex;gap:6px;flex-shrink:0}
+.card-title{font-size:15px;font-weight:600}
+.card-meta{font-size:13px;color:var(--text2);margin-top:2px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.badge-ep{background:var(--pink-light);color:var(--pink-text)}
+.badge-sc{background:var(--teal-light);color:var(--teal-text)}
+.badge-div{background:var(--amber-light);color:var(--amber-text)}
+.card-body{margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)}
+.field{margin-bottom:8px}
+.field-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.field-val{font-size:14px;color:var(--text)}
+.photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.photo-thumb{width:72px;height:72px;border-radius:var(--radius);object-fit:cover;border:0.5px solid var(--border)}
+.photo-add{width:72px;height:72px;border-radius:var(--radius);border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;background:var(--bg2)}
+.photo-add svg{width:24px;height:24px;stroke:var(--text3)}
+.photo-add input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.photo-wrap{position:relative;width:72px;height:72px}
+.photo-del{position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.empty{text-align:center;padding:48px 16px;color:var(--text3)}
+.empty svg{width:40px;height:40px;stroke:var(--text3);margin-bottom:12px;opacity:.5}
+.empty p{font-size:14px}
+.produit-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:0.5px solid var(--border);font-size:14px}
+.produit-row:last-child{border-bottom:none}
+.cat-pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.cat-pill.maquillage{background:var(--pink-light);color:var(--pink-text)}
+.cat-pill.coiffure{background:var(--teal-light);color:var(--teal-text)}
+.cat-pill.autre{background:var(--amber-light);color:var(--amber-text)}
+.notes-textarea{width:100%;min-height:200px;font-size:15px;line-height:1.6}
+.save-confirm{font-size:12px;color:var(--teal-text);height:18px;margin-top:6px}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 env(safe-area-inset-bottom)}
+.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:10px auto 0}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px}
+.sheet-title{font-size:17px;font-weight:600}
+.sheet-body{padding:0 20px 20px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sheet-footer{display:flex;gap:8px;padding:12px 20px;border-top:0.5px solid var(--border)}
+.sheet-footer .btn{flex:1;justify-content:center}
+.count{display:inline-flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:10px;min-width:18px;height:18px;font-size:11px;padding:0 5px;color:var(--text2);margin-left:4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <span class="topbar-title">✦ MU Continuity</span>
+    <select class="proj-sel" id="proj-sel" onchange="switchProject(this.value)"></select>
+    <div class="icon-btn" onclick="openSheet('sheetNewProj')" title="Nouveau projet">＋</div>
+    <div class="icon-btn" onclick="openRename()" title="Renommer">✎</div>
+    <div class="icon-btn danger" onclick="deleteProject()" title="Supprimer">✕</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('fiches',this)">👤 Fiches <span class="count" id="cnt-f">0</span></div>
+    <div class="tab" onclick="showTab('produits',this)">💧 Produits <span class="count" id="cnt-p">0</span></div>
+    <div class="tab" onclick="showTab('notes',this)">📓 Notes</div>
+    <div class="tab" onclick="showTab('divers',this)">📁 Divers</div>
+  </div>
+
+  <div class="content">
+    <!-- FICHES -->
+    <div class="section active" id="sec-fiches">
+      <div class="toolbar">
+        <input type="search" id="srch-f" class="flex-input" placeholder="Rechercher..." oninput="renderFiches()">
+        <select id="fil-ep" onchange="renderFiches()" style="width:auto">
+          <option value="">Tous eps</option>
+        </select>
+        <div class="btn primary" onclick="openSheet('sheetFiche');resetFicheForm()">＋ Fiche</div>
+      </div>
+      <div id="fiches-list"></div>
+    </div>
+
+    <!-- PRODUITS -->
+    <div class="section" id="sec-produits">
+      <div class="toolbar">
+        <input type="search" id="srch-p" class="flex-input" placeholder="Rechercher..." oninput="renderProduits()">
+        <select id="fil-cat" onchange="renderProduits()" style="width:auto">
+          <option value="">Tout</option>
+          <option value="maquillage">Maquillage</option>
+          <option value="coiffure">Coiffure</option>
+          <option value="autre">Autre</option>
+        </select>
+        <div class="btn primary" onclick="openSheet('sheetProduit');resetProduitForm()">＋</div>
+      </div>
+      <div id="produits-list"></div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="section" id="sec-notes">
+      <div class="toolbar" style="margin-bottom:10px">
+        <select id="notes-ep" onchange="loadNote()" style="flex:1">
+          <option value="">— Épisode —</option>
+        </select>
+        <input type="text" id="notes-sc" placeholder="Scène / jour" style="flex:1" oninput="loadNote()">
+      </div>
+      <textarea class="notes-textarea" id="notes-txt" placeholder="Notes de continuité...&#10;&#10;Ex: Scène 12 — cheveux légèrement défaits côté gauche, rouge à lèvres retouché..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <div class="btn primary" style="flex:1;justify-content:center" onclick="saveNote()">💾 Sauvegarder</div>
+      </div>
+      <div class="save-confirm" id="note-confirm"></div>
+    </div>
+
+    <!-- DIVERS -->
+    <div class="section" id="sec-divers">
+      <div class="toolbar">
+        <div class="btn primary" onclick="openSheet('sheetDivers');resetDiversForm()">＋ Note diverse</div>
+      </div>
+      <div id="divers-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEETS / MODALS -->
+<div class="overlay" id="sheetNewProj">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">Nouveau projet</span><div class="icon-btn" onclick="closeSheet('sheetNewProj')">✕</div></div>
+    <div class="sheet-body">
+      <div class="form-row"><label>Nom du projet *</label><input id="np-name" placeholder="Ex: Mortal Beings"></div>
+    </div>
+    <div class="sheet-footer">
+      <div class="btn" onclick="closeSheet('sheetNewProj')">Annuler</div>
+      <div class="btn primary" onclick="createProject()">✓ Créer</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sheetRename">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">Renommer le projet</span><div class="icon-btn" onclick="closeSheet('sheetRename')">✕</div></div>
+    <div class="sheet-body">
+      <div class="form-row"><label>Nouveau nom</label><input id="rn-name"></div>
+    </div>
+    <div class="sheet-footer">
+      <div class="btn" onclick="closeSheet('sheetRename')">Annuler</div>
+      <div class="btn primary" onclick="renameProject()">✓ Renommer</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sheetFiche">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title" id="fiche-sheet-title">Nouvelle fiche</span><div class="icon-btn" onclick="closeSheet('sheetFiche')">✕</div></div>
+    <div class="sheet-body">
+      <input type="hidden" id="f-id">
+      <div class="form-2col">
+        <div class="form-row"><label>Personnage *</label><input id="f-perso" placeholder="Ex: Anna"></div>
+        <div class="form-row"><label>Acteur / actrice</label><input id="f-acteur"></div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row"><label>Épisode *</label><input id="f-ep" placeholder="Ex: EP03"></div>
+        <div class="form-row"><label>Scène(s)</label><input id="f-scene" placeholder="Ex: SC04"></div>
+      </div>
+      <div class="form-row"><label>Coiffure</label><textarea id="f-coiffure" placeholder="Longueur, couleur, texture..."></textarea></div>
+      <div class="form-row"><label>Maquillage</label><textarea id="f-makeup" placeholder="Fond de teint, yeux, lèvres..."></textarea></div>
+      <div class="form-row"><label>Produits utilisés</label><textarea id="f-produits" placeholder="Liste des produits..."></textarea></div>
+      <div class="form-row"><label>Notes continuité</label><textarea id="f-notes" placeholder="Détails importants..."></textarea></div>
+      <div class="form-row">
+        <label>Photos</label>
+        <div class="photos" id="photo-strip"></div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <div class="btn" onclick="closeSheet('sheetFiche')">Annuler</div>
+      <div class="btn primary" onclick="saveFiche()">✓ Enregistrer</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sheetProduit">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">Produit</span><div class="icon-btn" onclick="closeSheet('sheetProduit')">✕</div></div>
+    <div class="sheet-body">
+      <input type="hidden" id="p-id">
+      <div class="form-2col">
+        <div class="form-row"><label>Nom *</label><input id="p-nom" placeholder="Ex: Pro Filt'r"></div>
+        <div class="form-row"><label>Marque</label><input id="p-marque" placeholder="Ex: Fenty Beauty"></div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row"><label>Catégorie</label>
+          <select id="p-cat"><option value="maquillage">Maquillage</option><option value="coiffure">Coiffure</option><option value="autre">Autre</option></select>
+        </div>
+        <div class="form-row"><label>Référence / teinte</label><input id="p-ref" placeholder="Ex: N°185W"></div>
+      </div>
+      <div class="form-row"><label>Notes</label><textarea id="p-notes" placeholder="Personnages, scènes..."></textarea></div>
+    </div>
+    <div class="sheet-footer">
+      <div class="btn" onclick="closeSheet('sheetProduit')">Annuler</div>
+      <div class="btn primary" onclick="saveProduit()">✓ Enregistrer</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sheetDivers">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">Note diverse</span><div class="icon-btn" onclick="closeSheet('sheetDivers')">✕</div></div>
+    <div class="sheet-body">
+      <input type="hidden" id="d-id">
+      <div class="form-2col">
+        <div class="form-row"><label>Titre *</label><input id="d-titre" placeholder="Ex: Livraison..."></div>
+        <div class="form-row"><label>Épisode / contexte</label><input id="d-ep"></div>
+      </div>
+      <div class="form-row"><label>Contenu</label><textarea id="d-contenu"></textarea></div>
+    </div>
+    <div class="sheet-footer">
+      <div class="btn" onclick="closeSheet('sheetDivers')">Annuler</div>
+      <div class="btn primary" onclick="saveDivers()">✓ Enregistrer</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY='muc_data_v1';
+let data={projects:{},currentId:null};
+let currentPhotos=[];
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}}
+function load(){try{const d=localStorage.getItem(STORE_KEY);if(d)data=JSON.parse(d)}catch(e){}}
+
+function proj(){return data.projects[data.currentId]}
+
+function init(){
+  load();
+  if(!Object.keys(data.projects).length){
+    const id1=uid(),id2=uid();
+    data.projects[id1]={id:id1,name:'Brothers',fiches:[],produits:[],notes:{},divers:[]};
+    data.projects[id2]={id:id2,name:'Mortal Beings',fiches:[],produits:[],notes:{},divers:[]};
+    data.currentId=id1;
+    save();
+  }
+  if(!data.currentId)data.currentId=Object.keys(data.projects)[0];
+  renderProjSel();
+  loadProject();
+}
+
+function renderProjSel(){
+  const sel=document.getElementById('proj-sel');
+  sel.innerHTML=Object.values(data.projects).map(p=>`<option value="${p.id}"${p.id===data.currentId?' selected':''}>${p.name}</option>`).join('');
+}
+
+function switchProject(id){data.currentId=id;save();loadProject()}
+
+function loadProject(){
+  updateEpFilters();renderFiches();renderProduits();renderDivers();updateCounts();
+  document.getElementById('notes-txt').value='';
+  document.getElementById('notes-ep').value='';
+  document.getElementById('notes-sc').value='';
+  renderNotesEps();
+}
+
+function updateCounts(){
+  document.getElementById('cnt-f').textContent=proj().fiches.length;
+  document.getElementById('cnt-p').textContent=proj().produits.length;
+}
+
+function openSheet(id){document.getElementById(id).classList.add('open')}
+function closeSheet(id){document.getElementById(id).classList.remove('open')}
+
+function createProject(){
+  const name=document.getElementById('np-name').value.trim();
+  if(!name){alert('Nom obligatoire.');return}
+  const id=uid();
+  data.projects[id]={id,name,fiches:[],produits:[],notes:{},divers:[]};
+  data.currentId=id;
+  document.getElementById('np-name').value='';
+  closeSheet('sheetNewProj');save();renderProjSel();loadProject();
+}
+
+function openRename(){
+  document.getElementById('rn-name').value=proj().name;
+  openSheet('sheetRename');
+}
+function renameProject(){
+  const name=document.getElementById('rn-name').value.trim();
+  if(!name)return;
+  proj().name=name;closeSheet('sheetRename');save();renderProjSel();
+}
+
+function deleteProject(){
+  if(Object.keys(data.projects).length<=1){alert('Vous devez conserver au moins un projet.');return}
+  if(!confirm(`Supprimer "${proj().name}" ? Toutes les données seront perdues.`))return;
+  delete data.projects[data.currentId];
+  data.currentId=Object.keys(data.projects)[0];
+  save();renderProjSel();loadProject();
+}
+
+function showTab(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='notes')renderNotesEps();
+}
+
+function getEps(){return[...new Set(proj().fiches.map(f=>f.ep).filter(Boolean))].sort()}
+
+function updateEpFilters(){
+  const eps=getEps();
+  const fil=document.getElementById('fil-ep');
+  const v=fil.value;
+  fil.innerHTML='<option value="">Tous eps</option>';
+  eps.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;fil.appendChild(o)});
+  fil.value=v;
+}
+
+function renderNotesEps(){
+  const eps=getEps();
+  const sel=document.getElementById('notes-ep');
+  const v=sel.value;
+  sel.innerHTML='<option value="">— Épisode —</option>';
+  eps.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o)});
+  sel.value=v;
+}
+
+function loadNote(){
+  const ep=document.getElementById('notes-ep').value;
+  const sc=document.getElementById('notes-sc').value.trim();
+  const key=ep+(sc?'_'+sc:'');
+  document.getElementById('notes-txt').value=key?(proj().notes[key]||''):'';
+}
+
+function saveNote(){
+  const ep=document.getElementById('notes-ep').value;
+  const sc=document.getElementById('notes-sc').value.trim();
+  const key=ep+(sc?'_'+sc:'');
+  if(!key){alert('Sélectionner un épisode.');return}
+  proj().notes[key]=document.getElementById('notes-txt').value;
+  save();
+  const c=document.getElementById('note-confirm');
+  c.textContent='✓ Sauvegardée';setTimeout(()=>c.textContent='',2000);
+}
+
+function resetFicheForm(){
+  ['f-perso','f-acteur','f-ep','f-scene','f-coiffure','f-makeup','f-produits','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-id').value='';
+  document.getElementById('fiche-sheet-title').textContent='Nouvelle fiche';
+  currentPhotos=[];renderPhotoStrip();
+}
+
+function renderPhotoStrip(){
+  const strip=document.getElementById('photo-strip');strip.innerHTML='';
+  currentPhotos.forEach((src,i)=>{
+    const w=document.createElement('div');w.className='photo-wrap';
+    w.innerHTML=`<img src="${src}" class="photo-thumb" alt="photo"><button class="photo-del" onclick="removePhoto(${i})">×</button>`;
+    strip.appendChild(w);
+  });
+  const add=document.createElement('div');add.className='photo-add';
+  add.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><input type="file" accept="image/*" multiple onchange="handlePhotos(event)">`;
+  strip.appendChild(add);
+}
+
+function removePhoto(i){currentPhotos.splice(i,1);renderPhotoStrip()}
+
+function handlePhotos(e){
+  const files=[...e.target.files];let done=0;
+  files.forEach(f=>{const r=new FileReader();r.onload=ev=>{currentPhotos.push(ev.target.result);done++;if(done===files.length)renderPhotoStrip()};r.readAsDataURL(f)});
+}
+
+function saveFiche(){
+  const perso=document.getElementById('f-perso').value.trim();
+  const ep=document.getElementById('f-ep').value.trim();
+  if(!perso||!ep){alert('Personnage et épisode obligatoires.');return}
+  const id=document.getElementById('f-id').value;
+  const obj={id:id||uid(),perso,acteur:document.getElementById('f-acteur').value.trim(),ep,scene:document.getElementById('f-scene').value.trim(),coiffure:document.getElementById('f-coiffure').value.trim(),makeup:document.getElementById('f-makeup').value.trim(),produits:document.getElementById('f-produits').value.trim(),notes:document.getElementById('f-notes').value.trim(),photos:[...currentPhotos]};
+  if(id){const i=proj().fiches.findIndex(f=>f.id===id);if(i>-1)proj().fiches[i]=obj}else{proj().fiches.push(obj)}
+  closeSheet('sheetFiche');save();updateEpFilters();renderFiches();updateCounts();
+}
+
+function editFiche(id){
+  const f=proj().fiches.find(x=>x.id===id);if(!f)return;
+  document.getElementById('f-id').value=f.id;
+  document.getElementById('fiche-sheet-title').textContent='Modifier la fiche';
+  ['perso','acteur','ep','scene','coiffure','makeup','produits','notes'].forEach(k=>document.getElementById('f-'+k).value=f[k]||'');
+  currentPhotos=[...(f.photos||[])];renderPhotoStrip();
+  openSheet('sheetFiche');
+}
+
+function deleteFiche(id){
+  if(!confirm('Supprimer cette fiche ?'))return;
+  proj().fiches=proj().fiches.filter(f=>f.id!==id);
+  save();updateEpFilters();renderFiches();updateCounts();
+}
+
+function renderFiches(){
+  const q=(document.getElementById('srch-f').value||'').toLowerCase();
+  const ep=document.getElementById('fil-ep').value;
+  const list=proj().fiches.filter(f=>(!q||f.perso.toLowerCase().includes(q)||(f.acteur||'').toLowerCase().includes(q))&&(!ep||f.ep===ep));
+  const el=document.getElementById('fiches-list');
+  if(!list.length){el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><p>Aucune fiche. Créez votre première fiche personnage.</p></div>`;return}
+  el.innerHTML=list.map(f=>`
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${esc(f.perso)}</div>
+          ${f.acteur?`<div class="card-meta">${esc(f.acteur)}</div>`:''}
+          <div class="badges">
+            <span class="badge badge-ep">▶ ${esc(f.ep)}</span>
+            ${f.scene?`<span class="badge badge-sc">${esc(f.scene)}</span>`:''}
+          </div>
+        </div>
+        <div class="card-actions">
+          <div class="btn sm" onclick="editFiche('${f.id}')">✎</div>
+          <div class="btn sm danger" onclick="deleteFiche('${f.id}')">✕</div>
+        </div>
+      </div>
+      ${(f.coiffure||f.makeup||f.produits||f.notes||f.photos?.length)?`
+      <div class="card-body">
+        ${f.coiffure?`<div class="field"><div class="field-label">✂ Coiffure</div><div class="field-val">${esc(f.coiffure)}</div></div>`:''}
+        ${f.makeup?`<div class="field"><div class="field-label">✦ Maquillage</div><div class="field-val">${esc(f.makeup)}</div></div>`:''}
+        ${f.produits?`<div class="field"><div class="field-label">💧 Produits</div><div class="field-val">${esc(f.produits)}</div></div>`:''}
+        ${f.notes?`<div class="field"><div class="field-label">📝 Notes</div><div class="field-val">${esc(f.notes)}</div></div>`:''}
+        ${f.photos?.length?`<div class="photos">${f.photos.map(p=>`<img src="${p}" class="photo-thumb" alt="photo">`).join('')}</div>`:''}`
+      :''}
+    </div>`).join('');
+}
+
+function resetProduitForm(){
+  ['p-nom','p-marque','p-ref','p-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-cat').value='maquillage';
+  document.getElementById('p-id').value='';
+}
+
+function saveProduit(){
+  const nom=document.getElementById('p-nom').value.trim();
+  if(!nom){alert('Nom obligatoire.');return}
+  const id=document.getElementById('p-id').value;
+  const obj={id:id||uid(),nom,marque:document.getElementById('p-marque').value.trim(),cat:document.getElementById('p-cat').value,ref:document.getElementById('p-ref').value.trim(),notes:document.getElementById('p-notes').value.trim()};
+  if(id){const i=proj().produits.findIndex(p=>p.id===id);if(i>-1)proj().produits[i]=obj}else{proj().produits.push(obj)}
+  closeSheet('sheetProduit');save();renderProduits();updateCounts();
+}
+
+function editProduit(id){
+  const p=proj().produits.find(x=>x.id===id);if(!p)return;
+  document.getElementById('p-id').value=p.id;
+  document.getElementById('p-nom').value=p.nom;
+  document.getElementById('p-marque').value=p.marque||'';
+  document.getElementById('p-cat').value=p.cat;
+  document.getElementById('p-ref').value=p.ref||'';
+  document.getElementById('p-notes').value=p.notes||'';
+  openSheet('sheetProduit');
+}
+
+function deleteProduit(id){
+  if(!confirm('Supprimer ce produit ?'))return;
+  proj().produits=proj().produits.filter(p=>p.id!==id);save();renderProduits();updateCounts();
+}
+
+function renderProduits(){
+  const q=(document.getElementById('srch-p').value||'').toLowerCase();
+  const cat=document.getElementById('fil-cat').value;
+  const list=proj().produits.filter(p=>(!q||p.nom.toLowerCase().includes(q)||(p.marque||'').toLowerCase().includes(q))&&(!cat||p.cat===cat));
+  const el=document.getElementById('produits-list');
+  if(!list.length){el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><p>Aucun produit enregistré.</p></div>`;return}
+  el.innerHTML=`<div class="card"><div>${list.map(p=>`
+    <div class="produit-row">
+      <span class="cat-pill ${p.cat}">${p.cat}</span>
+      <span style="flex:1;font-weight:500">${esc(p.nom)}${p.marque?` <span style="font-weight:400;color:var(--text2)">— ${esc(p.marque)}</span>`:''}</span>
+      ${p.ref?`<span style="font-size:12px;color:var(--text2)">${esc(p.ref)}</span>`:''}
+      <div class="btn sm" onclick="editProduit('${p.id}')">✎</div>
+      <div class="btn sm danger" onclick="deleteProduit('${p.id}')">✕</div>
+    </div>`).join('')}</div></div>`;
+}
+
+function resetDiversForm(){
+  ['d-titre','d-ep','d-contenu'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('d-id').value='';
+}
+
+function saveDivers(){
+  const titre=document.getElementById('d-titre').value.trim();
+  if(!titre){alert('Titre obligatoire.');return}
+  const id=document.getElementById('d-id').value;
+  const obj={id:id||uid(),titre,ep:document.getElementById('d-ep').value.trim(),contenu:document.getElementById('d-contenu').value.trim()};
+  if(id){const i=proj().divers.findIndex(d=>d.id===id);if(i>-1)proj().divers[i]=obj}else{proj().divers.push(obj)}
+  closeSheet('sheetDivers');save();renderDivers();
+}
+
+function editDivers(id){
+  const d=proj().divers.find(x=>x.id===id);if(!d)return;
+  document.getElementById('d-id').value=d.id;
+  document.getElementById('d-titre').value=d.titre;
+  document.getElementById('d-ep').value=d.ep||'';
+  document.getElementById('d-contenu').value=d.contenu||'';
+  openSheet('sheetDivers');
+}
+
+function deleteDivers(id){
+  if(!confirm('Supprimer ?'))return;
+  proj().divers=proj().divers.filter(d=>d.id!==id);save();renderDivers();
+}
+
+function renderDivers(){
+  const el=document.getElementById('divers-list');
+  if(!proj().divers.length){el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><p>Aucune note diverse.</p></div>`;return}
+  el.innerHTML=proj().divers.map(d=>`
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${esc(d.titre)}</div>
+          ${d.ep?`<div class="badges"><span class="badge badge-div">${esc(d.ep)}</span></div>`:''}
+        </div>
+        <div class="card-actions">
+          <div class="btn sm" onclick="editDivers('${d.id}')">✎</div>
+          <div class="btn sm danger" onclick="deleteDivers('${d.id}')">✕</div>
+        </div>
+      </div>
+      ${d.contenu?`<div class="card-body"><div style="font-size:14px">${esc(d.contenu)}</div></div>`:''}
+    </div>`).join('');
+}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+init();
+</script>
+</body>
+</html>
