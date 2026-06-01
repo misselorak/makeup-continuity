@@ -322,7 +322,14 @@ let data={projects:{},currentId:null};
 let scenePhotoBuffers={};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}}
+function save(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify(data));
+  }catch(e){
+    // Quota exceeded — warn user
+    alert('⚠️ Espace de stockage presque plein. Exportez vos données maintenant via le bouton ⬇, puis supprimez quelques photos pour libérer de la place.');
+  }
+}
 function load(){try{const d=localStorage.getItem(STORE_KEY);if(d)data=JSON.parse(d)}catch(e){}}
 function proj(){return data.projects[data.currentId]}
 
@@ -446,9 +453,34 @@ function renderScenePhotoStrip(idx){
 }
 
 function removeScenePhoto(idx,i){scenePhotoBuffers[idx].splice(i,1);renderScenePhotoStrip(idx)}
+
+function compressImage(file,maxPx,quality,callback){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>maxPx||h>maxPx){if(w>h){h=Math.round(h*maxPx/w);w=maxPx}else{w=Math.round(w*maxPx/h);h=maxPx}}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      callback(canvas.toDataURL('image/jpeg',quality));
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
 function handleScenePhotos(e,idx){
-  const files=[...e.target.files];let done=0;
-  files.forEach(f=>{const r=new FileReader();r.onload=ev=>{scenePhotoBuffers[idx].push(ev.target.result);done++;if(done===files.length)renderScenePhotoStrip(idx)};r.readAsDataURL(f)});
+  const files=[...e.target.files];
+  let done=0;
+  files.forEach(f=>{
+    compressImage(f,800,0.70,compressed=>{
+      scenePhotoBuffers[idx].push(compressed);
+      done++;
+      if(done===files.length)renderScenePhotoStrip(idx);
+    });
+  });
 }
 
 function resetFicheForm(){
@@ -621,21 +653,40 @@ function renderDivers(){
 
 // EXPORT / IMPORT
 function exportData(){
-  const json=JSON.stringify(data,null,2);const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='MUContinuity_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='MUContinuity_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},1000);
 }
 function importData(e){
-  const file=e.target.files[0];if(!file)return;
+  const file=e.target.files[0];
+  if(!file)return;
   const r=new FileReader();
   r.onload=ev=>{
     try{
-      const imported=JSON.parse(ev.target.result);if(!imported.projects)throw new Error();
-      if(!confirm('Importer ? Les données actuelles seront remplacées.'))return;
-      data=imported;if(!data.currentId||!data.projects[data.currentId])data.currentId=Object.keys(data.projects)[0];
-      save();renderProjSel();loadProject();alert('✓ Données importées !');
-    }catch(e){alert('Fichier invalide.');}
-  };r.readAsText(file);e.target.value='';
+      const imported=JSON.parse(ev.target.result);
+      if(!imported.projects||typeof imported.projects!=='object')throw new Error('Format invalide');
+      const keys=Object.keys(imported.projects);
+      if(keys.length===0)throw new Error('Aucun projet');
+      if(!confirm('Importer ce fichier ?\nVos données actuelles seront remplacées.'))return;
+      data={projects:imported.projects,currentId:imported.currentId||keys[0]};
+      if(!data.projects[data.currentId])data.currentId=keys[0];
+      save();
+      renderProjSel();
+      loadProject();
+      alert('✓ Données importées avec succès !');
+    }catch(err){
+      alert('Fichier invalide ou corrompu.\nUtilise un fichier exporté depuis cette app.');
+    }
+    e.target.value='';
+  };
+  r.onerror=()=>{alert('Erreur de lecture du fichier.');e.target.value=''};
+  r.readAsText(file);
 }
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
