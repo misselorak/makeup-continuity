@@ -436,28 +436,63 @@ function printFiche(id){
 }
 
 function printScene(ficheId, sceneIdx){
-  const allCards=document.querySelectorAll('.fiche-card');
-  // Hide all cards
-  allCards.forEach(c=>c.setAttribute('style','display:none'));
-  const targetCard=document.querySelector(`.fiche-card[data-fiche-id="${ficheId}"]`);
-  if(targetCard){
-    // Show only target card
-    targetCard.setAttribute('style','display:block');
-    // Hide all scene previews inside except target
-    const allScenes=targetCard.querySelectorAll('.scene-preview');
-    allScenes.forEach((s,i)=>{
-      s.setAttribute('style', i===sceneIdx ? 'display:block' : 'display:none');
-    });
-  }
   const f=proj().fiches.find(x=>x.id===ficheId);
-  const s=f&&f.scenes?[...f.scenes].sort(sceneSort)[sceneIdx]:null;
-  document.getElementById('pdf-proj-name').textContent=proj().name+(f?' — '+f.perso:'')+(s&&s.num?' — Scène '+s.num:'');
-  window.print();
-  // Restore everything
-  allCards.forEach(c=>c.removeAttribute('style'));
-  if(targetCard){
-    targetCard.querySelectorAll('.scene-preview').forEach(s=>s.removeAttribute('style'));
-  }
+  if(!f)return;
+  const scenes=[...(f.scenes||[])].sort(sceneSort);
+  const s=scenes[sceneIdx];
+  if(!s)return;
+
+  const photos=s.photos&&s.photos.length
+    ? s.photos.map(p=>`<img src="${p}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #eee;">`).join('')
+    : '<span style="color:#999;font-size:13px">Aucune photo</span>';
+
+  const html=`<!DOCTYPE html><html lang="fr"><head>
+<meta charset="UTF-8">
+<title>Scène ${s.num||''} — ${f.perso}</title>
+<style>
+  body{font-family:-apple-system,Arial,sans-serif;margin:20px;color:#1a1a1a;font-size:13pt}
+  .header{display:flex;align-items:center;gap:12px;border-bottom:2px solid #D4537E;padding-bottom:12px;margin-bottom:16px}
+  .title{font-size:20pt;font-weight:700;color:#D4537E}
+  .sub{font-size:11pt;color:#999;font-style:italic}
+  .info-row{display:flex;gap:24px;margin-bottom:16px;font-size:12pt}
+  .info-item{background:#f5f5f5;padding:6px 14px;border-radius:8px}
+  .info-label{font-size:10pt;font-weight:700;color:#999;text-transform:uppercase}
+  .section{margin-bottom:16px}
+  .section-title{font-size:13pt;font-weight:700;padding:8px 12px;border-radius:6px;margin-bottom:8px}
+  .coiffure{background:#E1F5EE;color:#0F6E56}
+  .makeup{background:#FBEAF0;color:#72243E}
+  .notes{background:#FAEEDA;color:#854F0B}
+  .content{padding:8px 12px;background:#fafafa;border-radius:6px;min-height:60px;font-size:12pt;line-height:1.6}
+  .photos{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .footer{margin-top:24px;text-align:right;font-size:10pt;color:#bbb;font-style:italic}
+  @media print{body{margin:10mm}}
+</style>
+</head><body>
+<div class="header">
+  <div>
+    <div class="title">FICHE DE CONTINUITÉ</div>
+    <div class="sub">Make Up & Hair — Carole Descamps</div>
+  </div>
+</div>
+<div class="info-row">
+  <div class="info-item"><div class="info-label">Projet</div>${db.projects[db.currentId].name}</div>
+  <div class="info-item"><div class="info-label">Personnage</div>${f.perso}</div>
+  ${f.acteur?`<div class="info-item"><div class="info-label">Acteur</div>${f.acteur}</div>`:''}
+  <div class="info-item"><div class="info-label">Épisode</div>${f.ep}</div>
+  ${s.num?`<div class="info-item"><div class="info-label">Scène</div>${s.num}</div>`:''}
+  ${s.jour?`<div class="info-item"><div class="info-label">Jour</div>${s.jour}</div>`:''}
+</div>
+${s.coiffure?`<div class="section"><div class="section-title coiffure">✂ Coiffure</div><div class="content">${s.coiffure}</div></div>`:''}
+${s.makeup?`<div class="section"><div class="section-title makeup">✦ Maquillage</div><div class="content">${s.makeup}</div></div>`:''}
+${s.notes?`<div class="section"><div class="section-title notes">📝 Notes continuité</div><div class="content">${s.notes}</div></div>`:''}
+${s.photos&&s.photos.length?`<div class="section"><div class="section-title" style="background:#f0f0f0;color:#444">📷 Photos</div><div class="photos">${photos}</div></div>`:''}
+<div class="footer">Carole Descamps — Make Up & Hair Artist</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const w=window.open('','_blank','width=800,height=1000');
+  if(w){w.document.write(html);w.document.close();}
+  else{alert('Autorisez les popups pour imprimer une scène.');}
 }
 
 function printAll(){
