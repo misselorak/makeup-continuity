@@ -103,6 +103,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   .content{overflow:visible;padding:0}
   .view{display:block!important}
   .fiche-card{break-inside:avoid;border:1px solid #ddd;margin-bottom:16px;box-shadow:none}
+  .fiche-card[style*="display: none"],.fiche-card[style*="display:none"]{display:none!important}
+  .scene-preview[style*="display: none"],.scene-preview[style*="display:none"]{display:none!important}
   .pdf-header{display:flex!important}
   .scene-photo-thumb,.photo-thumb{width:80px!important;height:80px!important}
 }
@@ -434,26 +436,27 @@ function printFiche(id){
 }
 
 function printScene(ficheId, sceneIdx){
-  // Show only the specific scene preview, hide everything else
   const allCards=document.querySelectorAll('.fiche-card');
-  allCards.forEach(c=>c.style.display='none');
+  // Hide all cards
+  allCards.forEach(c=>c.setAttribute('style','display:none'));
   const targetCard=document.querySelector(`.fiche-card[data-fiche-id="${ficheId}"]`);
   if(targetCard){
-    targetCard.style.display='';
-    // Hide all scene previews except the one we want
+    // Show only target card
+    targetCard.setAttribute('style','display:block');
+    // Hide all scene previews inside except target
     const allScenes=targetCard.querySelectorAll('.scene-preview');
-    allScenes.forEach((s,i)=>s.style.display= i===sceneIdx?'':'none');
-    // Hide fiche-card-header actions (print buttons etc)
+    allScenes.forEach((s,i)=>{
+      s.setAttribute('style', i===sceneIdx ? 'display:block' : 'display:none');
+    });
   }
   const f=proj().fiches.find(x=>x.id===ficheId);
   const s=f&&f.scenes?[...f.scenes].sort(sceneSort)[sceneIdx]:null;
   document.getElementById('pdf-proj-name').textContent=proj().name+(f?' — '+f.perso:'')+(s&&s.num?' — Scène '+s.num:'');
   window.print();
-  // Restore
-  allCards.forEach(c=>c.style.display='');
+  // Restore everything
+  allCards.forEach(c=>c.removeAttribute('style'));
   if(targetCard){
-    const allScenes=targetCard.querySelectorAll('.scene-preview');
-    allScenes.forEach(s=>s.style.display='');
+    targetCard.querySelectorAll('.scene-preview').forEach(s=>s.removeAttribute('style'));
   }
 }
 
