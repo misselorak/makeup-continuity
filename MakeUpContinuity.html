@@ -389,7 +389,7 @@ function renderFiches(){
   if(!fiches.length){el.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><p>Aucune fiche.<br>Créez votre première fiche comédien.</p></div>`;return}
   el.innerHTML=fiches.map(f=>{
     const scenes=[...(f.scenes||[])].sort(sceneSort);
-    return`<div class="fiche-card">
+    return`<div class="fiche-card" data-fiche-id="${f.id}">
       <div class="fiche-card-header">
         <div>
           <div class="fiche-name">${esc(f.perso)}${f.statut?` <span style="font-size:12px;font-weight:400;color:var(--text2)">(${esc(f.statut)})</span>`:''}</div>
@@ -400,14 +400,17 @@ function renderFiches(){
           </div>
         </div>
         <div class="fiche-actions">
-          <div class="btn sm" onclick="printFiche('${f.id}')">🖨</div>
+          <div class="btn sm" onclick="printFiche('${f.id}')">🖨 Tout</div>
           <div class="btn sm" onclick="showFormView('${f.id}')">✎</div>
           <div class="btn sm danger" onclick="deleteFiche('${f.id}')">✕</div>
         </div>
       </div>
-      ${scenes.length?scenes.map(s=>`
-        <div class="scene-preview">
-          <div class="scene-preview-title">${s.num?'Scène '+esc(s.num):'Scène'}${s.jour?' — '+esc(s.jour):''}</div>
+      ${scenes.length?scenes.map((s,si)=>`
+        <div class="scene-preview" data-scene-idx="${si}" data-fiche-id="${f.id}">
+          <div class="scene-preview-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>${s.num?'Scène '+esc(s.num):'Scène'}${s.jour?' — '+esc(s.jour):''}</span>
+            <div class="btn sm" style="font-size:12px;padding:3px 8px" onclick="printScene('${f.id}',${si})">🖨</div>
+          </div>
           ${s.coiffure?`<div><strong>Coiffure :</strong> ${esc(s.coiffure)}</div>`:''}
           ${s.makeup?`<div><strong>Maquillage :</strong> ${esc(s.makeup)}</div>`:''}
           ${s.notes?`<div><strong>Notes :</strong> ${esc(s.notes)}</div>`:''}
@@ -419,16 +422,39 @@ function renderFiches(){
 
 // PRINT
 function printFiche(id){
-  // Hide all fiches except this one
+  // Show only this fiche card, hide others
   const all=document.querySelectorAll('.fiche-card');
   all.forEach(c=>c.style.display='none');
-  const cards=document.querySelectorAll('.fiche-card');
-  const fiches=proj().fiches;
-  const idx=fiches.findIndex(f=>f.id===id);
-  if(idx>-1&&cards[idx])cards[idx].style.display='';
-  document.getElementById('pdf-proj-name').textContent=proj().name+' — '+fiches[idx].perso;
+  const target=document.querySelector(`.fiche-card[data-fiche-id="${id}"]`);
+  if(target)target.style.display='';
+  const f=proj().fiches.find(x=>x.id===id);
+  document.getElementById('pdf-proj-name').textContent=proj().name+(f?' — '+f.perso:'');
   window.print();
   all.forEach(c=>c.style.display='');
+}
+
+function printScene(ficheId, sceneIdx){
+  // Show only the specific scene preview, hide everything else
+  const allCards=document.querySelectorAll('.fiche-card');
+  allCards.forEach(c=>c.style.display='none');
+  const targetCard=document.querySelector(`.fiche-card[data-fiche-id="${ficheId}"]`);
+  if(targetCard){
+    targetCard.style.display='';
+    // Hide all scene previews except the one we want
+    const allScenes=targetCard.querySelectorAll('.scene-preview');
+    allScenes.forEach((s,i)=>s.style.display= i===sceneIdx?'':'none');
+    // Hide fiche-card-header actions (print buttons etc)
+  }
+  const f=proj().fiches.find(x=>x.id===ficheId);
+  const s=f&&f.scenes?[...f.scenes].sort(sceneSort)[sceneIdx]:null;
+  document.getElementById('pdf-proj-name').textContent=proj().name+(f?' — '+f.perso:'')+(s&&s.num?' — Scène '+s.num:'');
+  window.print();
+  // Restore
+  allCards.forEach(c=>c.style.display='');
+  if(targetCard){
+    const allScenes=targetCard.querySelectorAll('.scene-preview');
+    allScenes.forEach(s=>s.style.display='');
+  }
 }
 
 function printAll(){
